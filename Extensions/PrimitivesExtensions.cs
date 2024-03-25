@@ -123,7 +123,7 @@ public static class PrimitivesExtensions
             Vector3 p3 = vertices[triangles[i + 2]];
             volume += SignedVolumeOfTriangle(p1, p2, p3, o);
         }
-        return Mathf.Abs(volume);
+        return Math.Abs(volume);
 
         float SignedVolumeOfTriangle(Vector3 p1, Vector3 p2, Vector3 p3, Vector3 o)
         {
@@ -140,7 +140,7 @@ public static class Vector2Extensions
 {
     public static Vector2 Rotate(this Vector2 v, float degrees)
     {
-        var radians = math.radians(degrees);
+        var radians = Mathf.Deg2Rad * degrees;
         return new Vector2(
             (float)(v.x * Math.Cos(radians) - v.y * Math.Sin(radians)),
             (float)(v.x * Math.Sin(radians) + v.y * Math.Cos(radians))
