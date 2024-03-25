@@ -1,0 +1,20 @@
+{
+  "name": "com.danqa1337.BasicUtills",
+  "version": "1.0.0",
+  "displayName": "Basic utills",
+  "description": "My set of utills",
+  "unity": "2019.1",
+  "unityRelease": "0b5",
+  "dependencies": {
+  },
+  "keywords": [
+    "keyword1",
+    "keyword2",
+    "keyword3"
+  ],
+  "author": {
+    "name": "Danqa1337",
+    "email": "ldk99@yandex.ru",
+    "url": ""
+  }
+}
