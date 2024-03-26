@@ -40,6 +40,12 @@ public static class PrimitivesExtensions
         return new Vector2(value, 0);
     }
 
+
+    public static Vector2 ToVector2X(this float value)
+    {
+        return new Vector2(value, 0);
+    }
+
     public static Vector2 ToVector2Y(this int value)
     {
         return new Vector2(0, value);
