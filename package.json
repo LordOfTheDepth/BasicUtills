@@ -6,8 +6,9 @@
     "description" : "",
     "unity"       : "2022.3",
     "unityRelease" : "",
-    "dependencies" : {
-    },
+  "dependencies": {
+    "com.unity.mathematics": "1.3.2"
+  },
     "keywords"     : [
     ],
     "author"       : {
