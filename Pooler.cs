@@ -5,10 +5,21 @@ using UnityEngine.Pool;
 
 public partial class Pooler : Singleton<Pooler>
 {
-    private Dictionary<string, PoolableItemPool<PoolableItem>> _poolsDict;
+    
     [SerializeField] private List<PoolParams> _poolElements;
     [SerializeField] private bool _enableCollectionChecks = true;
+    private Dictionary<string, ObjectPool<GameObject>> _poolsDict = new Dictionary<string, ObjectPool<GameObject>>();
 
+    private void OnValidate()
+    {
+        foreach (var pool in _poolElements)
+        {
+            if(pool.id == "" && pool.prefab != null)
+            {
+                pool.id = pool.prefab.name;
+            }
+        }
+    }
     private void Start()
     {
         UpdatePools();
@@ -27,38 +38,37 @@ public partial class Pooler : Singleton<Pooler>
     [ContextMenu("Clear")]
     public void Clear()
     {
-        while (instance.transform.childCount > 0)
+        foreach (var item in FindObjectsOfType<PoolerTag>())
         {
-            DestroyImmediate(instance.transform.GetChild(0).gameObject);
+            DestroyImmediate(item.gameObject);
         }
-        _poolsDict = null;
+        _poolsDict.Clear();
         Debug.Log("Pool cleared");
     }
 
     [ContextMenu("Update Pools")]
     public static void UpdatePools()
     {
-        instance._poolsDict = new Dictionary<string, PoolableItemPool<PoolableItem>>();
+        instance._poolsDict.Clear();    
         foreach (var poolParams in instance._poolElements)
         {
-            var poolId = poolParams.poolableItem.PoolID;
-            var createItemFunc = new Func<PoolableItem>(() =>
+            var poolId = poolParams.id;
+
+            var createItemFunc = new Func<GameObject>(() =>
             {
-                var item = Instantiate(poolParams.poolableItem, instance.transform);
-                instance._poolsDict[poolParams.poolableItem.PoolID].Release(item);
+                var item = Instantiate(poolParams.prefab, instance.transform);
+                item.AddComponent<PoolerTag>().id = poolId;
                 item.gameObject.SetActive(false);
                 return item;
             });
 
-            var objectPool = new PoolableItemPool<PoolableItem>
+            var objectPool = new ObjectPool<GameObject>
             (
-                poolParams,
                 createItemFunc,
-                OnTakeFromPool,
-                OnReturnedToPool,
-                OnDestroyPoolObject,
-                instance._enableCollectionChecks,
-                poolParams.size
+                instance.OnGet,
+                instance.OnRelease,
+                collectionCheck: instance._enableCollectionChecks,
+                defaultCapacity: poolParams.size
             );
             instance._poolsDict.Add(poolId, objectPool);
 
@@ -68,51 +78,31 @@ public partial class Pooler : Singleton<Pooler>
             }
         }
     }
-
-    public static void Put(GameObject go)
+    void OnRelease(GameObject gameObject)
     {
-        Put(go.GetComponent<PoolableItem>());
+        gameObject.SetActive(false);
+        gameObject.transform.SetParent(null);
     }
 
-    public static void Put(PoolableItem poolableItem)
+    void OnGet(GameObject gameObject)
     {
-        var id = poolableItem.PoolID;
-        poolableItem.transform.SetParent(instance.transform);
-        poolableItem.transform.localPosition = Vector3.zero;
-        poolableItem.gameObject.SetActive(false);
-
-        if (instance._poolsDict != null)
-        {
-            var poolQueue = instance._poolsDict[id];
-            poolQueue.Release(poolableItem);
-        }
-        else
-        {
-            DestroyImmediate(poolableItem);
-        }
+        gameObject.SetActive(true);
+        gameObject.transform.SetParent(null);
     }
 
-    public static PoolableItem Take(PoolableItem poolableItem, Vector3 position)
+    public static void Release(GameObject go)
     {
-        return instance.TakeProtected(poolableItem.PoolID, position);
+        var tag = go.GetComponent<PoolerTag>();
+        if(tag == null) throw new System.Exception("GameObject " + go.name + " doesn't have a pooler tag");
+        instance._poolsDict[tag.id].Release(go);
     }
 
-    public static T Take<T>(string name)
+    public static GameObject Take(string id)
     {
-        return Take(name).GetComponent<T>();
+        return instance.TakeProtected(id);
     }
 
-    public static PoolableItem Take(string name, Vector3 position)
-    {
-        return instance.TakeProtected(name, position);
-    }
-
-    public static PoolableItem Take(string name)
-    {
-        return instance.TakeProtected(name, Vector3.zero);
-    }
-
-    protected virtual PoolableItem TakeProtected(string id, Vector3 position)
+    protected virtual GameObject TakeProtected(string id)
     {
         if (_poolsDict == null) UpdatePools();
         if (!_poolsDict.ContainsKey(id)) throw new System.Exception("No such pool query " + id);
@@ -123,38 +113,20 @@ public partial class Pooler : Singleton<Pooler>
         }
         var item = _poolsDict[id].Get();
         item.transform.SetParent(null);
-        item.transform.position = position;
         item.gameObject.SetActive(true);
         return item;
-    }
-
-    private static void OnTakeFromPool(PoolableItem poolableItem)
-    {
-    }
-
-    private static void OnReturnedToPool(PoolableItem poolableItem)
-    {
-    }
-
-    private static void OnDestroyPoolObject(PoolableItem poolableItem)
-    {
     }
 
     [System.Serializable]
     public class PoolParams
     {
-        public PoolableItem poolableItem;
+        public GameObject prefab;
         public int size;
+        public string id;
     }
 
-    public class PoolableItemPool<T> : ObjectPool<T> where T : PoolableItem
-    {
-        public PoolParams PoolParams { get; protected set; }
-
-        public PoolableItemPool(PoolParams poolParams, Func<T> createFunc, Action<T> actionOnGet = null, Action<T> actionOnRelease = null, Action<T> actionOnDestroy = null, bool collectionCheck = true, int defaultCapacity = 10, int maxSize = 10000)
-            : base(createFunc, actionOnGet, actionOnRelease, actionOnDestroy, collectionCheck, defaultCapacity, maxSize)
-        {
-            this.PoolParams = poolParams;
-        }
-    }
+}
+public class PoolerTag : MonoBehaviour
+{
+    public string id;
 }
