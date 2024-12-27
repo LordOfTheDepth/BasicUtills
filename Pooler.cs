@@ -104,7 +104,7 @@ public partial class Pooler : Singleton<Pooler>
 
     protected virtual GameObject TakeProtected(string id)
     {
-        if (_poolsDict == null) UpdatePools();
+        if (_poolsDict == null || _poolsDict.Count == 0) UpdatePools();
         if (!_poolsDict.ContainsKey(id)) throw new System.Exception("No such pool query " + id);
 
         if (_poolsDict[id].CountInactive == 0)
