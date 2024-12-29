@@ -126,7 +126,3 @@ public partial class Pooler : Singleton<Pooler>
     }
 
 }
-public class PoolerTag : MonoBehaviour
-{
-    public string id;
-}
