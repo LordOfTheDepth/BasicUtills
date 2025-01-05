@@ -326,4 +326,21 @@ public static class KatabasisUtillsClass
 
         return cellsInRect.Where(c => (c - center).sqrMagnitude <= sqrRad).ToArray();
     }
+
+    public static Direction GetRandomDirection()
+    {
+        return Directions.RandomItem();
+    }
+
+    public static Direction GetOpositeDirection(Direction direction)
+    {
+        switch (direction)
+        {
+            case Direction.Up: return Direction.Down;
+            case Direction.Down: return Direction.Up;
+            case Direction.Left: return Direction.Right;
+            case Direction.Right: return Direction.Left;
+        }
+        return Direction.Null;
+    }
 }
